@@ -88,10 +88,12 @@ export default function RouteLayer({
             setRoutes(routeData);
             onRouteCalculated?.(routeData);
           } else {
+            setRoutes(null);
             onRouteCalculated?.(null);
           }
         } catch (error) {
           console.error('Error fetching route:', error);
+          setRoutes(null);
           onRouteCalculated?.(null);
         }
       };

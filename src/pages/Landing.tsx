@@ -96,6 +96,8 @@ export default function Landing() {
 
   // Rerouting logic
   const handleRouteCalculated = (routeData: RouteData | null) => {
+    console.log("Route calculated:", routeData); // Debug log
+    
     if (!routeData) {
       setCurrentRoute(null);
       return;
@@ -140,6 +142,7 @@ export default function Landing() {
           ],
         };
         setCurrentRoute(newMainRoute);
+        console.log("Set rerouted route:", newMainRoute); // Debug log
         return;
       } else {
          toast.error("High traffic on all routes!", {
@@ -149,6 +152,7 @@ export default function Landing() {
     }
     
     setCurrentRoute(routeData);
+    console.log("Set current route:", routeData); // Debug log
   };
 
   // Get current location
@@ -347,6 +351,17 @@ export default function Landing() {
         <div className="space-y-3">
           <div className="text-sm font-semibold">Route Planning</div>
           
+          {/* Debug info */}
+          <div className="text-xs text-blue-600">
+            Start: {startPoint ? `${startPoint[0].toFixed(4)}, ${startPoint[1].toFixed(4)}` : "Not set"}
+          </div>
+          <div className="text-xs text-blue-600">
+            End: {endPoint ? `${endPoint[0].toFixed(4)}, ${endPoint[1].toFixed(4)}` : "Not set"}
+          </div>
+          <div className="text-xs text-blue-600">
+            Route: {currentRoute ? "Calculated" : "Not calculated"}
+          </div>
+          
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -409,25 +424,25 @@ export default function Landing() {
             </Button>
           )}
 
-          {currentRoute && (
-            <Button
-              size="sm"
-              onClick={isSimulating ? stopSimulation : startSimulation}
-              className="w-full"
-            >
-              {isSimulating ? (
-                <>
-                  <Square className="h-4 w-4 mr-1" />
-                  Stop Simulation
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-1" />
-                  Start Realistic Drive
-                </>
-              )}
-            </Button>
-          )}
+          {/* Always show the button for testing */}
+          <Button
+            size="sm"
+            onClick={isSimulating ? stopSimulation : startSimulation}
+            className="w-full"
+            disabled={!currentRoute}
+          >
+            {isSimulating ? (
+              <>
+                <Square className="h-4 w-4 mr-1" />
+                Stop Simulation
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-1" />
+                Start Realistic Drive
+              </>
+            )}
+          </Button>
 
           <div className="text-xs text-muted-foreground">
             {isSettingStart && "Click on map to set start point"}
