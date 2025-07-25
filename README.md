@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Overview
 
 This project uses the following tech stack:
@@ -555,3 +556,10 @@ When using convex, make sure:
 - Always use the `@/folder` path, with `@/convex/folder/file.ts` syntax for importing convex files.
 - This includes importing generated files like `@/convex/_generated/server`, `@/convex/_generated/api`
 - Remember to import functions like useQuery, useMutation, useAction, etc. from `convex/react`
+=======
+# Kotech-hackathon
+
+
+> This Mohammed Anfas K P
+> Muhammed jasir E
+>>>>>>> 2a5fd6dc8c51f95d666273fdb21ad4729e2da310
