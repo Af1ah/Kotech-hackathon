@@ -195,20 +195,27 @@ export default function Landing() {
   };
 
   const startSimulation = () => {
-    if (!currentRoute) return;
+    if (!currentRoute) {
+      toast.error("No route available for simulation");
+      return;
+    }
     setIsSimulating(true);
     setSimulationProgress(0);
+    setCurrentVehiclePosition(null);
+    toast.success("Starting realistic drive simulation");
   };
 
   const stopSimulation = () => {
     setIsSimulating(false);
     setSimulationProgress(0);
     setCurrentVehiclePosition(null);
+    toast.info("Drive simulation stopped");
   };
 
   const handleSimulationComplete = () => {
     setIsSimulating(false);
     setSimulationProgress(100);
+    toast.success("Drive simulation completed!");
   };
 
   const handlePositionUpdate = (position: [number, number], progress: number) => {
