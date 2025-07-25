@@ -200,7 +200,7 @@ export default function Landing() {
 
   const startSimulation = () => {
     if (!currentRoute) {
-      toast.error("No route available for simulation");
+      toast.error("Please set start and end points first to calculate a route");
       return;
     }
     setIsSimulating(true);
@@ -424,12 +424,11 @@ export default function Landing() {
             </Button>
           )}
 
-          {/* Always show the button for testing */}
+          {/* Always show the button and make it clickable for testing */}
           <Button
             size="sm"
             onClick={isSimulating ? stopSimulation : startSimulation}
             className="w-full"
-            disabled={!currentRoute}
           >
             {isSimulating ? (
               <>
