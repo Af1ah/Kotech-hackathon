@@ -10,10 +10,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, Navigation, Play, Square, Clock, Route } from "lucide-react";
+import { toast } from "sonner";
+import { getTraffic } from "@/lib/traffic";
 
 const ICON = icon({
   iconUrl: "/marker-icon.png",
   iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
 const START_ICON = icon({
@@ -50,21 +53,21 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
   return null;
 }
 
-// Dummy school bus pickup points for London
+// Dummy school bus pickup points for Kottakkal, Malappuram
 const schoolPickupPoints: [number, number][] = [
-  [51.510, -0.095],
-  [51.512, -0.100],
-  [51.508, -0.085],
-  [51.515, -0.092],
+  [11.0004806, 76.0047580], // Kottakkal Town Center
+  [10.9918, 76.0155],    // Near Kottakkal Arya Vaidya Sala
+  [11.0102, 75.9989],    // Othukkungal
+  [10.9850, 76.0011],    // Changuvetty
 ];
 
 export default function Landing() {
-  const [position, setPosition] = useState<[number, number]>([51.505, -0.09]);
+  const [position, setPosition] = useState<[number, number]>([11.0004806, 76.0047580]);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
-  const [mode, setMode] = useState<MapMode>("delivery");
-  const [startPoint, setStartPoint] = useState<[number, number] | null>(null);
-  const [endPoint, setEndPoint] = useState<[number, number] | null>(null);
+  const [mode, setMode] = useState<MapMode>("school");
+  const [startPoint, setStartPoint] = useState<[number, number] | null>([10.99, 75.99]);
+  const [endPoint, setEndPoint] = useState<[number, number] | null>([11.02, 76.02]);
   const [isSettingStart, setIsSettingStart] = useState(false);
   const [isSettingEnd, setIsSettingEnd] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
@@ -72,6 +75,78 @@ export default function Landing() {
   const [currentRoute, setCurrentRoute] = useState<RouteData | null>(null);
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [currentVehiclePosition, setCurrentVehiclePosition] = useState<[number, number] | null>(null);
+
+  const getDistance = (from: {lat: number, lon: number}, to: {lat: number, lon: number}) => {
+    const R = 6371e3; // metres
+    const φ1 = from.lat * Math.PI/180; // φ, λ in radians
+    const φ2 = to.lat * Math.PI/180;
+    const Δφ = (to.lat-from.lat) * Math.PI/180;
+    const Δλ = (to.lon-from.lon) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // in metres
+  }
+
+  // Rerouting logic
+  const handleRouteCalculated = (routeData: RouteData | null) => {
+    if (!routeData) {
+      setCurrentRoute(null);
+      return;
+    }
+
+    const highTrafficIncidents = getTraffic().filter(incident => 
+      incident.severity === "critical" || incident.severity === "major"
+    );
+
+    const isRouteAffected = (routeCoords: [number, number][]) => {
+      for (const incident of highTrafficIncidents) {
+        for (const coord of routeCoords) {
+          const distance = getDistance(
+            { lat: incident.location[0], lon: incident.location[1] },
+            { lat: coord[0], lon: coord[1] }
+          );
+          if (distance < 500) { // 500 meters threshold
+            return incident;
+          }
+        }
+      }
+      return null;
+    };
+
+    const mainRouteTraffic = isRouteAffected(routeData.coordinates);
+
+    if (mainRouteTraffic) {
+      const goodAlternative = routeData.alternativeRoutes?.find(alt => !isRouteAffected(alt.coordinates));
+      
+      if (goodAlternative) {
+        toast.warning("Rerouting due to traffic!", {
+          description: `Original route affected by: ${mainRouteTraffic.description}. Switched to a clearer alternative.`,
+        });
+        const newMainRoute: RouteData = {
+          coordinates: goodAlternative.coordinates,
+          distance: goodAlternative.distance,
+          duration: goodAlternative.duration,
+          instructions: [],
+          alternativeRoutes: [
+            { type: "Original (Traffic)", distance: routeData.distance, duration: routeData.duration, coordinates: routeData.coordinates },
+            ...(routeData.alternativeRoutes?.filter(alt => alt !== goodAlternative) || [])
+          ],
+        };
+        setCurrentRoute(newMainRoute);
+        return;
+      } else {
+         toast.error("High traffic on all routes!", {
+          description: `Your route is affected by: ${mainRouteTraffic.description}. No clear alternatives found.`,
+        });
+      }
+    }
+    
+    setCurrentRoute(routeData);
+  };
 
   // Get current location
   useEffect(() => {
@@ -322,7 +397,7 @@ export default function Landing() {
           end={endPoint} 
           mode={mode}
           waypoints={mode === "school" ? schoolPickupPoints : []}
-          onRouteCalculated={setCurrentRoute}
+          onRouteCalculated={handleRouteCalculated}
         />
         
         {/* Drive Simulation */}

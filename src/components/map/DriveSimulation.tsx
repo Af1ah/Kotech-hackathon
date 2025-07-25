@@ -92,7 +92,10 @@ export default function DriveSimulation({
       }
 
       if (currentSegment < route.coordinates.length - 1) {
-        // Interpolate position within current segment
+        // Interpolate position within current segment.
+        // The marker moves in a straight line between the points provided by the routing engine.
+        // If the points are close enough, this creates the illusion of following the road's curves.
+        // The quality of this depends on the data from the routing service (OSRM).
         const start = route.coordinates[currentSegment];
         const end = route.coordinates[currentSegment + 1];
         
