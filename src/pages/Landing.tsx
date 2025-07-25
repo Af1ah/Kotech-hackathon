@@ -9,9 +9,10 @@ import DriveSimulation from "@/components/map/DriveSimulation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Navigation, Play, Square, Clock, Route } from "lucide-react";
+import { MapPin, Navigation, Play, Square, Clock, Route, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getTraffic } from "@/lib/traffic";
+import ReportIncident from "@/components/map/ReportIncident";
 
 const ICON = icon({
   iconUrl: "/marker-icon.png",
@@ -75,6 +76,8 @@ export default function Landing() {
   const [currentRoute, setCurrentRoute] = useState<RouteData | null>(null);
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [currentVehiclePosition, setCurrentVehiclePosition] = useState<[number, number] | null>(null);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportLocation, setReportLocation] = useState<[number, number] | null>(null);
 
   const getDistance = (from: {lat: number, lon: number}, to: {lat: number, lon: number}) => {
     const R = 6371e3; // metres
@@ -185,6 +188,9 @@ export default function Landing() {
     } else if (isSettingEnd) {
       setEndPoint([lat, lng]);
       setIsSettingEnd(false);
+    } else if (isReporting) {
+      setReportLocation([lat, lng]);
+      setIsReporting(false);
     }
   };
 
@@ -224,6 +230,26 @@ export default function Landing() {
     return null;
   };
 
+  const clearStartEnd = () => {
+    setStartPoint(null);
+    setEndPoint(null);
+    setCurrentRoute(null);
+    setIsSimulating(false);
+    setSimulationProgress(0);
+    setCurrentVehiclePosition(null);
+  };
+
+  const startReporting = () => {
+    setIsReporting(true);
+    setIsSettingStart(false);
+    setIsSettingEnd(false);
+  };
+
+  const handleReportSubmitted = () => {
+    // Force traffic layer to refresh
+    window.dispatchEvent(new CustomEvent('trafficUpdate'));
+  };
+
   const getModeDescription = (mode: MapMode) => {
     switch (mode) {
       case "delivery":
@@ -241,6 +267,14 @@ export default function Landing() {
     <div className="relative">
       <Search onSearch={handleSearch} />
       <ModeSelector selectedMode={mode} onModeChange={setMode} />
+      
+      {/* Report Incident Modal */}
+      <ReportIncident
+        isOpen={!!reportLocation}
+        onClose={() => setReportLocation(null)}
+        reportLocation={reportLocation}
+        onReportSubmitted={handleReportSubmitted}
+      />
       
       {/* Route Information Panel */}
       {currentRoute && (
@@ -313,6 +347,7 @@ export default function Landing() {
               onClick={() => {
                 setIsSettingStart(!isSettingStart);
                 setIsSettingEnd(false);
+                setIsReporting(false);
               }}
               className="flex-1"
             >
@@ -325,11 +360,33 @@ export default function Landing() {
               onClick={() => {
                 setIsSettingEnd(!isSettingEnd);
                 setIsSettingStart(false);
+                setIsReporting(false);
               }}
               className="flex-1"
             >
               <MapPin className="h-4 w-4 mr-1" />
               Set End
+            </Button>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={clearStartEnd}
+              className="flex-1"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear Points
+            </Button>
+            <Button
+              size="sm"
+              variant={isReporting ? "default" : "outline"}
+              onClick={startReporting}
+              className="flex-1"
+            >
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              Report Issue
             </Button>
           </div>
 
@@ -368,7 +425,8 @@ export default function Landing() {
           <div className="text-xs text-muted-foreground">
             {isSettingStart && "Click on map to set start point"}
             {isSettingEnd && "Click on map to set end point"}
-            {!isSettingStart && !isSettingEnd && !currentRoute && "Select start and end points to plan route"}
+            {isReporting && "Click on map to report an incident"}
+            {!isSettingStart && !isSettingEnd && !isReporting && !currentRoute && "Select start and end points to plan route"}
             {currentRoute && !isSimulating && "Route calculated! Click to start realistic driving simulation"}
             {isSimulating && "Realistic driving simulation in progress..."}
           </div>
