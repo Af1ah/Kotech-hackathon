@@ -87,6 +87,12 @@ export const reportIncident = (
   };
 
   userReportedIncidents.push(incident);
+  
+  // Trigger immediate update
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('trafficUpdate'));
+  }, 100);
+  
   return incident;
 };
 

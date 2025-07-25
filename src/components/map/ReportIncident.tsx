@@ -79,7 +79,11 @@ export default function ReportIncident({
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Incident Type</label>
-          <Select value={incidentType} onValueChange={(value) => setIncidentType(value as "accident" | "construction" | "closure")}>
+          <Select value={incidentType || ""} onValueChange={(value) => {
+            if (value && value !== "") {
+              setIncidentType(value as "accident" | "construction" | "closure");
+            }
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Select incident type" />
             </SelectTrigger>
