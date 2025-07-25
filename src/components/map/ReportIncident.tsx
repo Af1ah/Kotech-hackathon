@@ -21,7 +21,7 @@ export default function ReportIncident({
   reportLocation, 
   onReportSubmitted 
 }: ReportIncidentProps) {
-  const [incidentType, setIncidentType] = useState<string>("");
+  const [incidentType, setIncidentType] = useState<string>("construction");
   const [description, setDescription] = useState("");
 
   if (!isOpen || !reportLocation) return null;
