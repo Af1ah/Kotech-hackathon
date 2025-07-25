@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Polyline, useMap } from "react-leaflet";
+import { Polyline, Popup, useMap } from "react-leaflet";
 import { getTraffic } from "@/lib/traffic";
 
 export interface RouteData {
@@ -105,28 +105,62 @@ export default function RouteLayer({
 
   if (!routes) return null;
 
-  const getRouteColor = (index: number) => {
-    const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"];
-    return colors[index % colors.length];
-  };
-
   return (
     <>
-      <Polyline
-        positions={routes.coordinates}
-        color={getRouteColor(0)}
-        weight={5}
-        opacity={0.8}
-      />
-      {routes.alternativeRoutes?.map((route, index) => (
+      {/* Main route - highlighted in blue */}
+      {routes && (
         <Polyline
-          key={index}
-          positions={route.coordinates}
-          color="#9ca3af"
+          positions={routes.coordinates}
+          color="#3b82f6"
+          weight={5}
+          opacity={0.8}
+        >
+          <Popup>
+            <div className="p-2">
+              <div className="font-semibold text-blue-600 mb-1">Main Route ({mode} mode)</div>
+              <div className="text-sm space-y-1">
+                <div>Distance: {(routes.distance / 1000).toFixed(1)} km</div>
+                <div>Duration: {Math.round(routes.duration / 60)} min</div>
+                {routes.instructions.length > 0 && (
+                  <div className="mt-2">
+                    <div className="font-medium">Instructions:</div>
+                    <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                      {routes.instructions.slice(0, 5).map((instruction: string, index: number) => (
+                        <li key={index}>• {instruction}</li>
+                      ))}
+                      {routes.instructions.length > 5 && (
+                        <li className="text-muted-foreground">... and {routes.instructions.length - 5} more</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Popup>
+        </Polyline>
+      )}
+
+      {/* Alternative routes - shown in gray */}
+      {routes?.alternativeRoutes?.map((altRoute: any, index: number) => (
+        <Polyline
+          key={`alt-${index}`}
+          positions={altRoute.coordinates}
+          color="#6b7280"
           weight={3}
-          opacity={0.6}
-          dashArray="10, 10"
-        />
+          opacity={0.5}
+          dashArray="5, 10"
+        >
+          <Popup>
+            <div className="p-2">
+              <div className="font-semibold text-gray-600 mb-1">Alternative Route</div>
+              <div className="text-sm space-y-1">
+                <div>Type: {altRoute.type}</div>
+                <div>Distance: {(altRoute.distance / 1000).toFixed(1)} km</div>
+                <div>Duration: {Math.round(altRoute.duration / 60)} min</div>
+              </div>
+            </div>
+          </Popup>
+        </Polyline>
       ))}
     </>
   );
