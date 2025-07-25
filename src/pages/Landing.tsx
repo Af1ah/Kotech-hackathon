@@ -4,11 +4,12 @@ import { icon } from "leaflet";
 import Search from "@/components/map/Search";
 import ModeSelector, { MapMode } from "@/components/map/ModeSelector";
 import TrafficLayer from "@/components/map/TrafficLayer";
-import RouteLayer from "@/components/map/RouteLayer";
+import RouteLayer, { RouteData } from "@/components/map/RouteLayer";
+import DriveSimulation from "@/components/map/DriveSimulation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Navigation, Play, Square } from "lucide-react";
+import { MapPin, Navigation, Play, Square, Clock, Route } from "lucide-react";
 
 const ICON = icon({
   iconUrl: "/marker-icon.png",
@@ -68,7 +69,9 @@ export default function Landing() {
   const [isSettingEnd, setIsSettingEnd] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationPosition, setSimulationPosition] = useState<[number, number] | null>(null);
+  const [currentRoute, setCurrentRoute] = useState<RouteData | null>(null);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  const [currentVehiclePosition, setCurrentVehiclePosition] = useState<[number, number] | null>(null);
 
   // Get current location
   useEffect(() => {
@@ -111,30 +114,25 @@ export default function Landing() {
   };
 
   const startSimulation = () => {
-    if (!startPoint || !endPoint) return;
-    
+    if (!currentRoute) return;
     setIsSimulating(true);
-    setSimulationPosition(startPoint);
-    
-    // Simple animation from start to end
-    const steps = 50;
-    const latStep = (endPoint[0] - startPoint[0]) / steps;
-    const lngStep = (endPoint[1] - startPoint[1]) / steps;
-    
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setIsSimulating(false);
-        setSimulationPosition(null);
-        clearInterval(interval);
-        return;
-      }
-      
-      const newLat = startPoint[0] + (latStep * currentStep);
-      const newLng = startPoint[1] + (lngStep * currentStep);
-      setSimulationPosition([newLat, newLng]);
-    }, 100);
+    setSimulationProgress(0);
+  };
+
+  const stopSimulation = () => {
+    setIsSimulating(false);
+    setSimulationProgress(0);
+    setCurrentVehiclePosition(null);
+  };
+
+  const handleSimulationComplete = () => {
+    setIsSimulating(false);
+    setSimulationProgress(100);
+  };
+
+  const handlePositionUpdate = (position: [number, number], progress: number) => {
+    setCurrentVehiclePosition(position);
+    setSimulationProgress(progress * 100);
   };
 
   const MapClickHandler = () => {
@@ -151,10 +149,82 @@ export default function Landing() {
     return null;
   };
 
+  const getModeDescription = (mode: MapMode) => {
+    switch (mode) {
+      case "delivery":
+        return "Optimized for shortest distance and fuel efficiency";
+      case "school":
+        return "Route through multiple pickup points in sequence";
+      case "emergency":
+        return "Fastest route avoiding traffic and congestion";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="relative">
       <Search onSearch={handleSearch} />
       <ModeSelector selectedMode={mode} onModeChange={setMode} />
+      
+      {/* Route Information Panel */}
+      {currentRoute && (
+        <Card className="absolute top-4 left-4 z-[1000] p-4 w-80">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Route className="h-4 w-4" />
+              <div className="font-semibold capitalize">{mode} Mode</div>
+            </div>
+            
+            <div className="text-xs text-muted-foreground">
+              {getModeDescription(mode)}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-muted-foreground">Distance</div>
+                <div className="font-medium">{(currentRoute.distance / 1000).toFixed(1)} km</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Duration</div>
+                <div className="font-medium">{Math.round(currentRoute.duration / 60)} min</div>
+              </div>
+            </div>
+
+            {currentRoute.alternativeRoutes && currentRoute.alternativeRoutes.length > 0 && (
+              <div className="border-t pt-3">
+                <div className="text-sm font-medium mb-2">Alternative Routes:</div>
+                <div className="space-y-1 text-xs">
+                  {currentRoute.alternativeRoutes.map((alt, index) => (
+                    <div key={index} className="flex justify-between text-muted-foreground">
+                      <span>{alt.type}:</span>
+                      <span>{(alt.distance / 1000).toFixed(1)} km, {Math.round(alt.duration / 60)} min</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isSimulating && (
+              <div className="border-t pt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4" />
+                  <div className="text-sm font-medium">Live Simulation</div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${simulationProgress}%` }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Progress: {simulationProgress.toFixed(0)}%
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
       
       {/* Control Panel */}
       <Card className="absolute bottom-4 left-4 z-[1000] p-4 w-80">
@@ -200,22 +270,21 @@ export default function Landing() {
             </Button>
           )}
 
-          {startPoint && endPoint && (
+          {currentRoute && (
             <Button
               size="sm"
-              onClick={startSimulation}
-              disabled={isSimulating}
+              onClick={isSimulating ? stopSimulation : startSimulation}
               className="w-full"
             >
               {isSimulating ? (
                 <>
                   <Square className="h-4 w-4 mr-1" />
-                  Simulating...
+                  Stop Simulation
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-1" />
-                  Start Drive Simulation
+                  Start Realistic Drive
                 </>
               )}
             </Button>
@@ -224,7 +293,9 @@ export default function Landing() {
           <div className="text-xs text-muted-foreground">
             {isSettingStart && "Click on map to set start point"}
             {isSettingEnd && "Click on map to set end point"}
-            {!isSettingStart && !isSettingEnd && "Select start and end points to plan route"}
+            {!isSettingStart && !isSettingEnd && !currentRoute && "Select start and end points to plan route"}
+            {currentRoute && !isSimulating && "Route calculated! Click to start realistic driving simulation"}
+            {isSimulating && "Realistic driving simulation in progress..."}
           </div>
         </div>
       </Card>
@@ -251,6 +322,15 @@ export default function Landing() {
           end={endPoint} 
           mode={mode}
           waypoints={mode === "school" ? schoolPickupPoints : []}
+          onRouteCalculated={setCurrentRoute}
+        />
+        
+        {/* Drive Simulation */}
+        <DriveSimulation
+          route={currentRoute}
+          isActive={isSimulating}
+          onPositionUpdate={handlePositionUpdate}
+          onComplete={handleSimulationComplete}
         />
         
         {/* Search result marker */}
@@ -290,25 +370,6 @@ export default function Landing() {
             })}
           >
             <Popup>Your Current Location</Popup>
-          </Marker>
-        )}
-
-        {/* Simulation marker */}
-        {simulationPosition && (
-          <Marker 
-            position={simulationPosition} 
-            icon={icon({
-              iconUrl: `data:image/svg+xml;base64,${btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                  <circle cx="16" cy="16" r="12" fill="#8b5cf6" stroke="white" stroke-width="3"/>
-                  <polygon points="16,8 20,14 12,14" fill="white"/>
-                </svg>
-              `)}`,
-              iconSize: [32, 32],
-              iconAnchor: [16, 16],
-            })}
-          >
-            <Popup>Vehicle Position</Popup>
           </Marker>
         )}
       </MapContainer>
