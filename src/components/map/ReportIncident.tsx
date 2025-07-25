@@ -21,13 +21,13 @@ export default function ReportIncident({
   reportLocation, 
   onReportSubmitted 
 }: ReportIncidentProps) {
-  const [incidentType, setIncidentType] = useState<"accident" | "construction" | "closure" | "">("");
+  const [incidentType, setIncidentType] = useState<string>("");
   const [description, setDescription] = useState("");
 
   if (!isOpen || !reportLocation) return null;
 
   const handleSubmit = () => {
-    if (!incidentType) {
+    if (!incidentType || incidentType === "") {
       toast.error("Please select an incident type");
       return;
     }
@@ -79,11 +79,7 @@ export default function ReportIncident({
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Incident Type</label>
-          <Select value={incidentType || ""} onValueChange={(value) => {
-            if (value && value !== "") {
-              setIncidentType(value as "accident" | "construction" | "closure");
-            }
-          }}>
+          <Select value={incidentType} onValueChange={setIncidentType}>
             <SelectTrigger>
               <SelectValue placeholder="Select incident type" />
             </SelectTrigger>
