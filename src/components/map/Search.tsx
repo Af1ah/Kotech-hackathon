@@ -17,13 +17,13 @@ export default function Search({ onSearch }: SearchProps) {
   };
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-md px-4">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[90vw] max-w-md px-4">
       <div className="relative flex items-center gap-2">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for a location"
-          className="pr-10"
+          className="pr-10 text-sm"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSearch();

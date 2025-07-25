@@ -35,7 +35,7 @@ export default function ModeSelector({ selectedMode, onModeChange }: ModeSelecto
   ];
 
   return (
-    <Card className="absolute top-4 right-4 z-[1000] p-2">
+    <Card className="absolute top-4 right-4 z-[1000] p-2 hidden md:block">
       <div className="flex flex-col gap-2">
         {modes.map((mode) => {
           const Icon = mode.icon;

@@ -287,20 +287,20 @@ export default function Landing() {
         onReportSubmitted={handleReportSubmitted}
       />
       
-      {/* Route Information Panel */}
+      {/* Route Information Panel - Mobile Responsive */}
       {currentRoute && (
-        <Card className="absolute top-4 left-4 z-[1000] p-4 w-80">
-          <div className="space-y-3">
+        <Card className="absolute top-4 left-4 right-4 md:right-auto z-[1000] p-3 md:p-4 w-auto md:w-80">
+          <div className="space-y-2 md:space-y-3">
             <div className="flex items-center gap-2">
               <Route className="h-4 w-4" />
-              <div className="font-semibold capitalize">{mode} Mode</div>
+              <div className="font-semibold capitalize text-sm md:text-base">{mode} Mode</div>
             </div>
             
             <div className="text-xs text-muted-foreground">
               {getModeDescription(mode)}
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-2 md:gap-4 text-xs md:text-sm">
               <div>
                 <div className="text-muted-foreground">Distance</div>
                 <div className="font-medium">{(currentRoute.distance / 1000).toFixed(1)} km</div>
@@ -312,13 +312,13 @@ export default function Landing() {
             </div>
 
             {currentRoute.alternativeRoutes && currentRoute.alternativeRoutes.length > 0 && (
-              <div className="border-t pt-3">
-                <div className="text-sm font-medium mb-2">Alternative Routes:</div>
+              <div className="border-t pt-2 md:pt-3">
+                <div className="text-xs md:text-sm font-medium mb-1 md:mb-2">Alternative Routes:</div>
                 <div className="space-y-1 text-xs">
                   {currentRoute.alternativeRoutes.map((alt, index) => (
                     <div key={index} className="flex justify-between text-muted-foreground">
-                      <span>{alt.type}:</span>
-                      <span>{(alt.distance / 1000).toFixed(1)} km, {Math.round(alt.duration / 60)} min</span>
+                      <span className="truncate mr-2">{alt.type}:</span>
+                      <span className="whitespace-nowrap">{(alt.distance / 1000).toFixed(1)} km, {Math.round(alt.duration / 60)} min</span>
                     </div>
                   ))}
                 </div>
@@ -326,10 +326,10 @@ export default function Landing() {
             )}
 
             {isSimulating && (
-              <div className="border-t pt-3">
+              <div className="border-t pt-2 md:pt-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4" />
-                  <div className="text-sm font-medium">Live Simulation</div>
+                  <div className="text-xs md:text-sm font-medium">Live Simulation</div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                   <div 
@@ -346,23 +346,25 @@ export default function Landing() {
         </Card>
       )}
       
-      {/* Control Panel */}
-      <Card className="absolute bottom-4 left-4 z-[1000] p-4 w-80">
-        <div className="space-y-3">
+      {/* Control Panel - Mobile Responsive */}
+      <Card className="absolute bottom-4 left-4 right-4 md:right-auto z-[1000] p-3 md:p-4 w-auto md:w-80">
+        <div className="space-y-2 md:space-y-3">
           <div className="text-sm font-semibold">Route Planning</div>
           
-          {/* Debug info */}
-          <div className="text-xs text-blue-600">
-            Start: {startPoint ? `${startPoint[0].toFixed(4)}, ${startPoint[1].toFixed(4)}` : "Not set"}
-          </div>
-          <div className="text-xs text-blue-600">
-            End: {endPoint ? `${endPoint[0].toFixed(4)}, ${endPoint[1].toFixed(4)}` : "Not set"}
-          </div>
-          <div className="text-xs text-blue-600">
-            Route: {currentRoute ? "Calculated" : "Not calculated"}
+          {/* Debug info - Hidden on mobile */}
+          <div className="hidden md:block space-y-1">
+            <div className="text-xs text-blue-600">
+              Start: {startPoint ? `${startPoint[0].toFixed(4)}, ${startPoint[1].toFixed(4)}` : "Not set"}
+            </div>
+            <div className="text-xs text-blue-600">
+              End: {endPoint ? `${endPoint[0].toFixed(4)}, ${endPoint[1].toFixed(4)}` : "Not set"}
+            </div>
+            <div className="text-xs text-blue-600">
+              Route: {currentRoute ? "Calculated" : "Not calculated"}
+            </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2">
             <Button
               size="sm"
               variant={isSettingStart ? "default" : "outline"}
@@ -371,10 +373,10 @@ export default function Landing() {
                 setIsSettingEnd(false);
                 setIsReporting(false);
               }}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm px-2 md:px-3"
             >
-              <MapPin className="h-4 w-4 mr-1" />
-              Set Start
+              <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Set </span>Start
             </Button>
             <Button
               size="sm"
@@ -384,31 +386,31 @@ export default function Landing() {
                 setIsSettingStart(false);
                 setIsReporting(false);
               }}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm px-2 md:px-3"
             >
-              <MapPin className="h-4 w-4 mr-1" />
-              Set End
+              <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Set </span>End
             </Button>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={clearStartEnd}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm px-2 md:px-3"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear Points
+              <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Clear </span>Points
             </Button>
             <Button
               size="sm"
               variant={isReporting ? "default" : "outline"}
               onClick={startReporting}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm px-2 md:px-3"
             >
-              <AlertTriangle className="h-4 w-4 mr-1" />
-              Report Issue
+              <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden sm:inline">Report </span>Issue
             </Button>
           </div>
 
@@ -417,38 +419,37 @@ export default function Landing() {
               size="sm"
               variant="outline"
               onClick={() => setStartPoint(currentLocation)}
-              className="w-full"
+              className="w-full text-xs md:text-sm"
             >
-              <Navigation className="h-4 w-4 mr-1" />
+              <Navigation className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               Use Current Location as Start
             </Button>
           )}
 
-          {/* Always show the button and make it clickable for testing */}
           <Button
             size="sm"
             onClick={isSimulating ? stopSimulation : startSimulation}
-            className="w-full"
+            className="w-full text-xs md:text-sm"
           >
             {isSimulating ? (
               <>
-                <Square className="h-4 w-4 mr-1" />
+                <Square className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                 Stop Simulation
               </>
             ) : (
               <>
-                <Play className="h-4 w-4 mr-1" />
-                Start Realistic Drive
+                <Play className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                <span className="hidden sm:inline">Start Realistic </span>Drive
               </>
             )}
           </Button>
 
           <div className="text-xs text-muted-foreground">
-            {isSettingStart && "Click on map to set start point"}
-            {isSettingEnd && "Click on map to set end point"}
-            {isReporting && "Click on map to report an incident"}
+            {isSettingStart && "Tap map to set start point"}
+            {isSettingEnd && "Tap map to set end point"}
+            {isReporting && "Tap map to report an incident"}
             {!isSettingStart && !isSettingEnd && !isReporting && !currentRoute && "Select start and end points to plan route"}
-            {currentRoute && !isSimulating && "Route calculated! Click to start realistic driving simulation"}
+            {currentRoute && !isSimulating && "Route calculated! Tap to start driving simulation"}
             {isSimulating && "Realistic driving simulation in progress..."}
           </div>
         </div>
